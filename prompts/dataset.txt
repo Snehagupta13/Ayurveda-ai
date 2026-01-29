@@ -1,0 +1,34 @@
+prompt = f"""
+You are a medical AI assistant.
+
+Your task:
+1. Identify medical CONDITIONS mentioned in the text (e.g., fever, cough, pain).
+2. Identify MEDICINES mentioned in the text.
+3. Map which medicine is used FOR which condition ONLY IF CLEARLY STATED.
+
+Rules:
+- Do NOT guess or hallucinate.
+- Do NOT add new medicines.
+- If a condition-medicine relation is unclear, mark it as "unknown".
+- Return STRICT JSON only.
+
+JSON FORMAT:
+{{
+  "conditions": [
+    {{
+      "condition": "",
+      "recommended_medicines": [
+        {{
+          "name": "",
+          "dosage": "",
+          "frequency": "",
+          "instructions": ""
+        }}
+      ]
+    }}
+  ]
+}}
+
+TEXT:
+{ocr_text}
+"""
