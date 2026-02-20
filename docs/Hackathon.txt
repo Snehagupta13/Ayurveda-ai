@@ -1,0 +1,19 @@
+MedGemma Impact Challenge:
+    Build a real-world healthcare AI app using MedGemma 
+    that demonstrates fine-tuning, agent architecture, and
+    /or offline deployment
+
+Current Data Flow:
+    Raw Data : AyurGenixAI_Dataset.csv (446 rows x 34 columns)
+    Disease, Symptoms, Doshas, Herbs, Formulation, Diet...
+                │        
+                ▼
+    Preprocessing : dataset/ayurveda_finetune.json
+                │        
+                ▼
+    Fine-tuning (finetune_medgemma.py)
+    Base : google/medgemma-4b-it (4.3B params)
+    Method : LoRA (r=16, alpha=32)
+    Trainable : 11.9M params (0.28%)
+    Hardware : H100 80GB, bfloat16
+    Epochs : 3 | Loss : 

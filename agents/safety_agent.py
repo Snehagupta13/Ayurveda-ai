@@ -1,41 +1,29 @@
-"""
-Safety Agent
-Verifies safety of recommendations and flags potential risks
-"""
-
 class SafetyAgent:
-    """Agent for safety verification"""
-    
-    def __init__(self, llm):
-        """
-        Initialize safety agent
-        
-        Args:
-            llm: Language model instance
-        """
-        self.llm = llm
-    
-    def verify_recommendation(self, recommendation: str, user_context: dict) -> dict:
-        """
-        Verify safety of a recommendation
-        
-        Args:
-            recommendation: The recommendation to verify
-            user_context: User's medical history and context
-            
-        Returns:
-            Safety assessment with risk flags if any
-        """
-        pass
-    
-    def check_contraindications(self, remedy: str, medical_history: dict) -> bool:
-        """Check for contraindications with medical history"""
-        pass
-    
-    def flag_risks(self, recommendation: str) -> list:
-        """Identify and flag potential risks"""
-        pass
-    
-    def generate_disclaimer(self) -> str:
-        """Generate appropriate medical disclaimer"""
-        pass
+    """Validates output and appends safety disclaimer."""
+
+    DISCLAIMER = (
+        "\n\n---\n"
+        "SAFETY NOTICE: This is educational Ayurvedic guidance only. "
+        "It is NOT a medical diagnosis or prescription. "
+        "Always consult a qualified Ayurvedic practitioner (BAMS) and "
+        "licensed physician before starting any treatment. "
+        "In emergencies, contact medical services immediately."
+    )
+
+    DANGEROUS_KEYWORDS = [
+        "cure", "guaranteed", "100% effective",
+        "stop your medication", "replace your doctor"
+    ]
+
+    def run(self, state: dict) -> dict:
+        output = state.get("model_output", "")
+
+        # Safety check — remove overconfident claims
+        for kw in self.DANGEROUS_KEYWORDS:
+            if kw.lower() in output.lower():
+                output = output.replace(kw, f"[may help with]")
+
+        # Always append disclaimer
+        final_output = output + self.DISCLAIMER
+
+        return {**state, "final_output": final_output}

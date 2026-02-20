@@ -1,41 +1,65 @@
-"""
-Guidance Agent
-Generates personalized Ayurvedic guidance based on dosha and condition
-"""
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from peft import PeftModel
+
+BASE_MODEL = "google/medgemma-4b-it"
+LORA_PATH  = "models/medgemma-ayurveda-lora/final"
+
+_model     = None
+_tokenizer = None
+
+def _load_model():
+    global _model, _tokenizer
+    if _model is None:
+        print("[GuidanceAgent] Loading fine-tuned MedGemma...")
+        _tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, token=True)
+        _tokenizer.pad_token = _tokenizer.eos_token
+        base = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL, token=True, dtype=torch.bfloat16, device_map="auto"
+        )
+        _model = PeftModel.from_pretrained(base, LORA_PATH)
+        _model.eval()
+        print("[GuidanceAgent] Model ready!")
+    return _model, _tokenizer
+
 
 class GuidanceAgent:
-    """Agent for generating personalized guidance"""
-    
-    def __init__(self, llm):
-        """
-        Initialize guidance agent
-        
-        Args:
-            llm: Language model instance
-        """
-        self.llm = llm
-    
-    def generate_guidance(self, dosha: str, condition: str) -> dict:
-        """
-        Generate personalized guidance
-        
-        Args:
-            dosha: User's primary dosha
-            condition: Health condition or concern
-            
-        Returns:
-            Personalized recommendations including diet, lifestyle, and remedies
-        """
-        pass
-    
-    def recommend_diet(self, dosha: str, condition: str) -> list:
-        """Generate dietary recommendations"""
-        pass
-    
-    def recommend_lifestyle(self, dosha: str) -> list:
-        """Generate lifestyle recommendations"""
-        pass
-    
-    def recommend_remedies(self, condition: str, dosha: str) -> list:
-        """Generate herbal and therapeutic remedies"""
-        pass
+    """Calls the fine-tuned MedGemma model to generate clinical guidance."""
+
+    def run(self, state: dict) -> dict:
+        model, tokenizer = _load_model()
+        treatment = state.get("dosha_treatment", {})
+
+        instruction = f"""You are an Ayurvedic clinical assistant. A patient presents with the following:
+
+Disease: {state.get("disease", "Unknown")}
+Symptoms: {state.get("symptoms", "Not specified")}
+Age Group: {state.get("age_group", "Adult")}
+Gender: {state.get("gender", "Not specified")}
+Medical History: {state.get("medical_history", "None")}
+Current Medications: {state.get("current_medications", "None")}
+Stress Levels: {state.get("stress_levels", "Moderate")}
+Dietary Habits: {state.get("dietary_habits", "Not specified")}
+Primary Dosha Imbalance: {state.get("primary_dosha", "Vata")}
+Treatment Principle: {treatment.get("principle", "")}
+
+Provide a structured Ayurvedic assessment and treatment plan."""
+
+        prompt = (f"<start_of_turn>user\n{instruction}<end_of_turn>\n"
+                  f"<start_of_turn>model\n")
+
+        inputs = tokenizer(prompt, return_tensors="pt",
+                           return_token_type_ids=False).to(model.device)
+
+        with torch.inference_mode():
+            outputs = model.generate(
+                **inputs, max_new_tokens=512,
+                do_sample=False, pad_token_id=tokenizer.eos_token_id
+            )
+
+        raw = tokenizer.decode(
+            outputs[0][inputs["input_ids"].shape[-1]:],
+            skip_special_tokens=True
+        )
+
+        return {**state, "model_output": raw}
