@@ -1,91 +1,83 @@
 """
 LangGraph multi-agent pipeline for Ayurveda AI.
 
-Text-only flow:
-  SymptomAgent -> DoshaAgent -> GuidanceAgent (MedGemma) -> SafetyAgent
-
-Multimodal flow (with tongue image):
-  VisionAgent -> SymptomAgent -> DoshaAgent -> GuidanceAgent -> SafetyAgent
+Flow:
+  Patient Input
+      │
+  SymptomAgent      ← classifies symptoms, scores doshas
+      │
+  DoshaAgent        ← maps imbalance to treatment principles
+      │
+  GuidanceAgent     ← calls fine-tuned MedGemma 4B + LoRA
+      │
+  SafetyAgent       ← validates output, appends disclaimer
+      │
+  Final Assessment
 """
+
 try:
     from langgraph.graph import StateGraph, END
     LANGGRAPH_AVAILABLE = True
 except ImportError:
     LANGGRAPH_AVAILABLE = False
 
-from agents import SymptomAgent, DoshaAgent, GuidanceAgent, SafetyAgent, VisionAgent
+from agents import SymptomAgent, DoshaAgent, GuidanceAgent, SafetyAgent
 
-_text_pipeline   = None
-_vision_pipeline = None
 
-class SequentialPipeline:
-    def __init__(self, agents):
-        self.agents = agents
-    def invoke(self, state: dict) -> dict:
-        for agent in self.agents:
-            state = agent.run(state)
-        return state
+def build_pipeline():
+    symptom_agent  = SymptomAgent()
+    dosha_agent    = DoshaAgent()
+    guidance_agent = GuidanceAgent()
+    safety_agent   = SafetyAgent()
 
-def _build_graph(agent_list, entry):
-    if not LANGGRAPH_AVAILABLE:
-        return SequentialPipeline(agent_list)
-    names = [a.__class__.__name__.lower().replace("agent","") for a in agent_list]
-    g = StateGraph(dict)
-    for name, agent in zip(names, agent_list):
-        g.add_node(name, agent.run)
-    g.set_entry_point(names[0])
-    for i in range(len(names)-1):
-        g.add_edge(names[i], names[i+1])
-    g.add_edge(names[-1], END)
-    return g.compile()
+    if LANGGRAPH_AVAILABLE:
+        # Full LangGraph DAG
+        graph = StateGraph(dict)
+        graph.add_node("symptom",  symptom_agent.run)
+        graph.add_node("dosha",    dosha_agent.run)
+        graph.add_node("guidance", guidance_agent.run)
+        graph.add_node("safety",   safety_agent.run)
 
-def get_text_pipeline():
-    global _text_pipeline
-    if _text_pipeline is None:
-        _text_pipeline = _build_graph(
-            [SymptomAgent(), DoshaAgent(), GuidanceAgent(), SafetyAgent()],
-            entry="symptom"
-        )
-    return _text_pipeline
+        graph.set_entry_point("symptom")
+        graph.add_edge("symptom",  "dosha")
+        graph.add_edge("dosha",    "guidance")
+        graph.add_edge("guidance", "safety")
+        graph.add_edge("safety",   END)
 
-def get_vision_pipeline():
-    global _vision_pipeline
-    if _vision_pipeline is None:
-        _vision_pipeline = _build_graph(
-            [VisionAgent(), SymptomAgent(), DoshaAgent(), GuidanceAgent(), SafetyAgent()],
-            entry="vision"
-        )
-    return _vision_pipeline
+        return graph.compile()
+    else:
+        # Fallback sequential pipeline (no LangGraph dependency)
+        class SequentialPipeline:
+            def __init__(self, agents):
+                self.agents = agents
 
-def _format_output(result: dict) -> str:
-    dosha_scores = result.get("dosha_scores", {})
-    vision_info  = ""
-    if result.get("tongue_analysis"):
-        vision_info = (
-            f"VISUAL DARSHAN ANALYSIS:\n"
-            f"  Visual Dosha: {result.get('visual_dosha_indicator', 'N/A')}\n"
-            f"  Vision Scores: {result.get('dosha_scores_vision', {})}\n"
-            f"---\n"
-        )
-    agent_info = (
-        f"AGENT PIPELINE ANALYSIS:\n"
-        f"{vision_info}"
-        f"  Symptom Dosha Scores : {dosha_scores}\n"
-        f"  Primary Imbalance    : {result.get('primary_dosha', 'N/A')}\n"
-        f"  Secondary            : {result.get('secondary_dosha', 'N/A')}\n"
-        f"  Treatment Principle  : {result.get('dosha_treatment', {}).get('principle', 'N/A')}\n"
-        f"  Dosha Herbs          : {result.get('dosha_treatment', {}).get('herbs', 'N/A')}\n"
-        f"---\n\n"
-    )
-    return agent_info + result.get("final_output", "No output generated.")
+            def invoke(self, state: dict) -> dict:
+                for agent in self.agents:
+                    state = agent.run(state)
+                return state
+
+        return SequentialPipeline([
+            symptom_agent, dosha_agent, guidance_agent, safety_agent
+        ])
+
+
+# Singleton pipeline instance
+_pipeline = None
+
+def get_pipeline():
+    global _pipeline
+    if _pipeline is None:
+        _pipeline = build_pipeline()
+    return _pipeline
+
 
 def run_ayurveda_pipeline(disease, symptoms, age_group="Adult (20-40)",
                            gender="Male", medical_history="None",
                            current_medications="None",
                            stress_levels="Moderate",
-                           dietary_habits="Not specified",
-                           tongue_image=None) -> str:
-    state = {
+                           dietary_habits="Not specified") -> str:
+    """Main entry point — runs full 4-agent pipeline."""
+    patient_data = {
         "disease":             disease,
         "symptoms":            symptoms,
         "age_group":           age_group,
@@ -94,8 +86,20 @@ def run_ayurveda_pipeline(disease, symptoms, age_group="Adult (20-40)",
         "current_medications": current_medications,
         "stress_levels":       stress_levels,
         "dietary_habits":      dietary_habits,
-        "tongue_image":        tongue_image,
     }
-    pipeline = get_vision_pipeline() if tongue_image else get_text_pipeline()
-    result   = pipeline.invoke(state)
-    return _format_output(result)
+
+    pipeline = get_pipeline()
+    result   = pipeline.invoke(patient_data)
+
+    # Build enriched output with agent metadata prepended
+    dosha_info = (
+        f"AGENT ANALYSIS:\n"
+        f"  Dosha Scores    : {result.get('dosha_scores', {})}\n"
+        f"  Primary Imbalance: {result.get('primary_dosha', 'N/A')}\n"
+        f"  Secondary        : {result.get('secondary_dosha', 'N/A')}\n"
+        f"  Treatment Principle: {result.get('dosha_treatment', {}).get('principle', 'N/A')}\n"
+        f"  Suggested Herbs  : {result.get('dosha_treatment', {}).get('herbs', 'N/A')}\n"
+        f"---\n\n"
+    )
+
+    return dosha_info + result.get("final_output", "No output generated.")

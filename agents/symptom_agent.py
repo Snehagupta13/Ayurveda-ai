@@ -26,14 +26,6 @@ class SymptomAgent:
         secondary = [d for d, s in sorted(dosha_scores.items(),
                      key=lambda x: -x[1]) if d != primary_dosha and s > 0]
 
-        # Merge visual dosha if VisionAgent ran first
-        visual_dosha = patient_data.get("visual_dosha_indicator", None)
-        if visual_dosha:
-            dosha_scores[visual_dosha.lower()] += 2  # visual finding weighted x2
-            primary_dosha = max(dosha_scores, key=dosha_scores.get)
-            secondary = [d for d, s in sorted(dosha_scores.items(),
-                         key=lambda x: -x[1]) if d != primary_dosha and s > 0]
-
         return {
             **patient_data,
             "dosha_scores":   dosha_scores,

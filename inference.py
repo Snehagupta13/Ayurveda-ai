@@ -1,22 +1,14 @@
-"""
-inference.py — Public API for Ayurveda AI.
-Routes through 4-agent (text) or 5-agent (text + vision) pipeline.
-"""
+import torch
 from graph.pipeline import run_ayurveda_pipeline
 
-def get_ayurvedic_assessment(disease, symptoms,
-                              age_group="Adult (20-40)",
-                              gender="Male",
-                              medical_history="None",
+def get_ayurvedic_assessment(disease, symptoms, age_group="Adult (20-40)",
+                              gender="Male", medical_history="None",
                               current_medications="None",
                               stress_levels="Moderate",
-                              dietary_habits="Not specified",
-                              tongue_image=None) -> str:
+                              dietary_habits="Not specified") -> str:
     """
-    Main entry point.
-    tongue_image: PIL.Image or None
-    If tongue_image provided → 5-agent multimodal pipeline
-    If None                 → 4-agent text pipeline
+    Public API — routes through full 4-agent LangGraph pipeline:
+      SymptomAgent → DoshaAgent → GuidanceAgent (MedGemma) → SafetyAgent
     """
     return run_ayurveda_pipeline(
         disease=disease, symptoms=symptoms,
@@ -24,13 +16,13 @@ def get_ayurvedic_assessment(disease, symptoms,
         medical_history=medical_history,
         current_medications=current_medications,
         stress_levels=stress_levels,
-        dietary_habits=dietary_habits,
-        tongue_image=tongue_image
+        dietary_habits=dietary_habits
     )
+
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("TEST 1: Text-only pipeline (Diabetes)")
+    print("TEST 1: Diabetes — Full Agent Pipeline")
     print("=" * 60)
     r1 = get_ayurvedic_assessment(
         disease="Diabetes",
@@ -44,17 +36,15 @@ if __name__ == "__main__":
     print(r1)
 
     print("\n" + "=" * 60)
-    print("TEST 2: Vision pipeline (Tongue image)")
+    print("TEST 2: Hypertension — Full Agent Pipeline")
     print("=" * 60)
-    try:
-        from PIL import Image
-        img = Image.open("dataset/tongue_samples/kapha_tongue.jpg")
-        r2 = get_ayurvedic_assessment(
-            disease="General Checkup",
-            symptoms="Fatigue, bloating, low energy",
-            age_group="Adult (20-40)", gender="Female",
-            tongue_image=img
-        )
-        print(r2)
-    except FileNotFoundError:
-        print("No tongue image found — run the dataset download command first.")
+    r2 = get_ayurvedic_assessment(
+        disease="Hypertension",
+        symptoms="High blood pressure, headaches, dizziness",
+        age_group="Senior (60+)", gender="Female",
+        medical_history="Heart disease",
+        current_medications="Beta-blockers",
+        stress_levels="Very High",
+        dietary_habits="High salt, Low fiber"
+    )
+    print(r2)

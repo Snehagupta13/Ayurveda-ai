@@ -1,449 +1,261 @@
-# 🌿 Ayurveda AI: Offline Healthcare Intelligence for Real Clinics
+# 🌿 Ayurveda AI — Offline Clinical Intelligence
 
-An **open-source, offline-first, production-grade AI system** that provides safe, structured, non-diagnostic Ayurvedic patient guidance. Designed for real clinical environments—not perfect labs.
+> Fine-tuned MedGemma 4B | 5-Agent LangGraph Pipeline | Multimodal Tongue Analysis | 100% Offline
 
-> **For clinics without the internet. For doctors who can't depend on the cloud. For patients who deserve privacy.**
-
----
-
-## 🎯 The Problem We Solve
-
-In many parts of the world, healthcare AI assumes perfect infrastructure. But reality is different:
-
-- 🌍 **1.2 billion people** live in areas with unreliable internet
-- 🏥 **Rural clinics** can't afford cloud AI services
-- 🔒 **Patient privacy** regulations forbid cloud storage
-- ⚠️ **Misinformation** spreads faster than guidance
-- 👨‍⚕️ **Doctors are overwhelmed**—they need AI as a tool, not a replacement
-
-**Ayurveda AI solves this by running entirely offline on clinic hardware, providing safe, structured guidance that extends doctor expertise.**
+**Submitted to:** MedGemma Impact Challenge (Kaggle, Feb 2026)  
+**Branch:** master  
+**Author:** Priti Sudha
 
 ---
 
-## ✨ Key Features
+## 📌 Problem
 
-### 🔐 Privacy-First Architecture
-- **100% Offline** — No cloud, no data leaving the clinic
-- **HIPAA Ready** — Can handle sensitive patient information
-- **Local Processing** — All intelligence runs on clinic hardware
-- **No Login Required** — Simple to deploy, complex to compromise
+Over **1.2 billion people** in South Asia rely on Ayurveda as primary healthcare. Rural practitioners have no AI tools, no reliable internet, and no access to specialist consultations. No AI system exists for Ayurvedic clinical decision support.
 
-### 🧠 Multi-Agent Safety System
-- **Symptom Understanding** — Converts free text to structured form
-- **Dosha Analysis** — Identifies Ayurvedic constitutional patterns
-- **Guidance Generation** — Personalized wellness recommendations
-- **Safety Verification** — Checks contraindications and flags risks
-- **Disclaimer Engine** — Ensures ethical, legal compliance
+---
 
-### 🚀 Production-Grade
-- **Auditable Decisions** — Every recommendation is traceable
-- **Regulatory Compliance** — Built for HIPAA, FDA, FTC, AYUSH
-- **Deterministic Outputs** — Not a black box, not a chatbot
-- **Scalable** — From single clinic to 10,000+ locations
-- **MedGemma-Powered** — Healthcare-optimized language model
+## ✅ Solution
 
-### 🌐 Versatile Deployment
+Ayurveda AI is a fully offline clinical intelligence system that provides structured Ayurvedic assessments including:
 
-**Mode 1: Clinic Mode (Primary)**
+- Dosha analysis (Vata / Pitta / Kapha)
+- Herb recommendations
+- Formulations and dosages
+- Dietary and lifestyle guidance
+- Yoga and physical therapy
+- Prognosis and prevention
+
+All processing runs **100% locally** with zero internet dependency.
+
+---
+
+## 📊 Key Results
+
+| Metric | Value |
+|--------|-------|
+| Base Model | google/medgemma-4b-it (4.3B params) |
+| Training Method | LoRA (r=16, alpha=32) |
+| Trainable Parameters | 11,898,880 (0.28%) |
+| Start Loss | 2.89 |
+| Final Train Loss | 0.27 |
+| Final Eval Loss | 0.36 |
+| Overall Herb Accuracy | 95% |
+| Specific Herb Accuracy | 75% |
+| Training Data | 446 Ayurvedic treatment plans |
+| Hardware | NVIDIA H100 80GB |
+| Epochs | 3 |
+
+---
+
+## 📁 Project Structure
+
 ```
-Doctor's office → Laptop with Ayurveda AI → Patient guidance
-All data stays on clinic hardware
-```
-
-**Mode 2: Demo Mode (Optional)**
-```
-Public demo server → Limited inputs → Generic recommendations
-No patient data collected
+Ayurveda-ai/
+│
+├── agents/
+│   ├── __init__.py
+│   ├── symptom_agent.py           # Scores Vata/Pitta/Kapha from symptoms
+│   ├── dosha_agent.py             # Maps dosha to treatment principles
+│   ├── guidance_agent.py          # Calls fine-tuned MedGemma 4B + LoRA
+│   ├── safety_agent.py            # Validates output, appends disclaimer
+│   └── vision_agent.py            # Tongue analysis via MedGemma vision
+│
+├── app/
+│   └── main.py                    # Streamlit UI (3 tabs)
+│
+├── assets/
+│   ├── training_curves.png        # 3-panel training chart
+│   └── loss_curve_simple.png      # Simple loss curve (2.89 → 0.27)
+│
+├── dataset/
+│   ├── ayurveda_finetune.json     # 446 formatted training examples
+│   ├── kaggle_ayurveda/
+│   │   └── AyurGenixAI_Dataset.csv
+│   └── tongue_samples/
+│       ├── vata_tongue.jpg
+│       ├── pitta_tongue.jpg
+│       ├── kapha_tongue.jpg
+│       └── healthy_tongue.jpg
+│
+├── graph/
+│   └── pipeline.py                # LangGraph agent orchestration
+│
+├── models/
+│   └── medgemma-ayurveda-lora/
+│       └── final/
+│           ├── adapter_config.json
+│           └── adapter_model.safetensors
+│
+├── scripts/
+│   ├── finetune_medgemma.py       # Fine-tuning (custom training loop)
+│   ├── evaluate.py                # Herb recommendation accuracy
+│   ├── generate_charts.py         # Training loss charts
+│   └── write_agents.py            # Agent file generator
+│
+├── inference.py                   # Main entry point
+├── ayurveda_ai_kaggle.ipynb       # Kaggle submission notebook
+├── requirements.txt
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## 🏗️ System Architecture
+## 🔄 Agent Pipeline
 
 ```
-User Input (Patient)
-    ↓
-Streamlit UI (Offline)
-    ↓
-LangGraph Orchestrator
-    ↓
-┌─────────────────────────────────────┐
-│ Multi-Agent System                  │
-│ • Symptom Understanding Agent       │
-│ • Dosha Analysis Agent              │
-│ • Guidance Generation Agent         │
-│ • Safety & Contraindication Agent   │
-│ • Disclaimer Engine                 │
-└─────────────────────────────────────┘
-    ↓
-MedGemma 2B (Local Inference)
-    ↓
-Structured JSON Output
-    ↓
-Safe, Auditable Recommendations
+Patient Input
+(disease, symptoms, age, gender,
+ history, medications, stress, diet)
+ + optional tongue image
+        │
+        ▼
+[Agent 1] VisionAgent
+Analyzes tongue coating and texture
+using MedGemma 4B vision capability
+(runs only if tongue image provided)
+        │
+        ▼
+[Agent 2] SymptomAgent
+Scores Vata / Pitta / Kapha
+from symptom keywords
+Merges visual dosha (weighted x2)
+        │
+        ▼
+[Agent 3] DoshaAgent
+Maps primary dosha to
+treatment principles, herbs, yoga
+        │
+        ▼
+[Agent 4] GuidanceAgent
+Fine-tuned MedGemma 4B + LoRA
+generates full clinical assessment
+        │
+        ▼
+[Agent 5] SafetyAgent
+Removes overconfident claims
+Appends medical disclaimer
+        │
+        ▼
+Final Structured Assessment
 ```
 
-**Why This Design?**
-- ✅ No hallucinations from chained prompts
-- ✅ Every step is verifiable
-- ✅ Safety checks can't be bypassed
-- ✅ Doctors understand the reasoning
-- ✅ Regulators can audit the system
+**Text mode:** 4 agents (no image)  
+**Multimodal mode:** 5 agents (with tongue image)
 
 ---
 
-## 📋 System Components
-
-### Frontend (`app/`)
-- **main.py** — Streamlit UI for patient interactions
-- **api.py** — Backend interface
-
-### Agents (`agents/`)
-- **symptom_agent.py** — Symptom parsing and structuring
-- **dosha_agent.py** — Constitutional assessment
-- **guidance_agent.py** — Personalized recommendations
-- **safety_agent.py** — Risk assessment and disclaimers
-
-### Orchestration (`graph/`)
-- **langgraph_flow.py** — Multi-agent workflow management
-
-### Prompts (`prompts/`)
-- **symptom.txt** — System prompt for symptom agent
-- **dosha.txt** — System prompt for dosha assessment
-- **guidance.txt** — System prompt for recommendations
-- **safety.txt** — System prompt for safety verification
-
-### Models (`models/`)
-- **medgemma_loader.py** — MedGemma model management
-
-### Documentation (`docs/`)
-- **architecture.md** — Detailed technical design
-- **safety.md** — Safety protocols and guidelines
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Python 3.12+
-- 8GB RAM minimum (16GB recommended)
-- Linux/Mac/Windows
-- ~4GB disk space for model
-
-### Installation
+## ⚙️ Installation
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/yourusername/ayurveda-ai.git
-cd ayurveda-ai
+# Clone repository
+git clone https://github.com/Snehagupta13/Ayurveda-ai.git
+cd Ayurveda-ai
+git checkout master
 
-# 2. Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# Create environment
+conda create -n MedGemma python=3.12
+conda activate MedGemma
 
-# 3. Install dependencies
+# Install dependencies
 pip install -r requirements.txt
-
-# 4. Download MedGemma model (first run only)
-# The system will automatically download when first used
 ```
 
-### Running Locally
+---
+
+## 🚀 Run Commands (In Order)
 
 ```bash
-# Activate environment
-source .venv/bin/activate
+# Step 1 — Activate environment
+conda activate MedGemma
+cd ~/Ayurveda-ai
 
-# Start Streamlit app
-streamlit run app/main.py
+# Step 2 — Fine-tune MedGemma
+python scripts/finetune_medgemma.py
 
-# Open browser to http://localhost:8501
+# Step 3 — Generate training charts
+python scripts/generate_charts.py
+
+# Step 4 — Test inference pipeline
+python inference.py
+
+# Step 5 — Run evaluation
+python scripts/evaluate.py
+
+# Step 6 — Launch Streamlit UI
+streamlit run app/main.py --server.port 8501 --server.address 0.0.0.0
 ```
+
+Open browser at `http://localhost:8501`
 
 ---
 
-## 💡 Example Workflow
+## 🖥️ Streamlit UI — 3 Tabs
 
-### Patient Input
-```
-"I have joint pain, stiffness in the morning, and feel cold easily. 
-I'm 65 years old and take blood pressure medication."
-```
+**Tab 1 — Clinical Assessment**  
+Enter patient details → 4-agent pipeline → structured Ayurvedic assessment
 
-### System Processing
+**Tab 2 — Tongue Analysis (Darshan)**  
+Upload tongue photo → 5-agent multimodal pipeline → visual dosha diagnosis
 
-**1. Symptom Agent**
-```json
-{
-  "symptoms": ["joint pain", "morning stiffness"],
-  "properties": ["cold", "stiff"],
-  "age": 65,
-  "medications": ["antihypertensive"]
-}
-```
-
-**2. Dosha Agent**
-```json
-{
-  "primary_dosha": "Vata",
-  "confidence": "high",
-  "reasoning": "Cold sensitivity + stiffness = Vata characteristics"
-}
-```
-
-**3. Guidance Agent**
-```json
-{
-  "recommendations": [
-    "Warm oil massage (Abhyanga)",
-    "Ginger in daily meals",
-    "Gentle yoga"
-  ]
-}
-```
-
-**4. Safety Agent**
-```json
-{
-  "risk_level": "medium",
-  "warning": "Ginger may interact with BP medication",
-  "action": "Consult doctor before dietary changes"
-}
-```
-
-**5. Output to Patient**
-```
-RECOMMENDATIONS:
-✓ Warm oil massage daily
-✓ Include ginger in meals (with doctor approval)
-✓ Gentle stretching exercises
-
-⚠️ IMPORTANT:
-This is educational guidance, not medical treatment.
-Consult your doctor before making dietary changes.
-Your blood pressure medication may interact with some herbs.
-
-When to see a doctor:
-→ Pain worsens
-→ New symptoms appear
-→ Difficulty with daily activities
-```
+**Tab 3 — Training Results**  
+Loss curves, epoch metrics, model configuration, accuracy numbers
 
 ---
 
-## 🔒 Safety Guarantees
+## 🔧 Technical Details
 
-### Built-In Safeguards
-- ✅ **Offline-First** — No data leaves the clinic
-- ✅ **No Diagnosis** — System explicitly avoids diagnosis claims
-- ✅ **Contradiction Detection** — Flags potentially unsafe combinations
-- ✅ **Qualified Disclaimers** — Clear about limitations
-- ✅ **Auditable** — Every decision is logged and reviewable
-- ✅ **Conservative** — Defaults to "consult a professional"
+**Why a custom training loop?**  
+MedGemma 4B uses the Gemma3 architecture which requires explicit `token_type_ids`
+during training. Standard frameworks (HuggingFace Trainer, SFTTrainer) do not
+handle this automatically. We wrote a custom PyTorch loop with manual
+`token_type_ids` injection as zeros.
 
-### What It Won't Do
-- ❌ Diagnose diseases
-- ❌ Prescribe dosages
-- ❌ Replace doctor consultation
-- ❌ Store patient data in cloud
-- ❌ Make guarantees about outcomes
-- ❌ Recommend stopping medications
+**Training configuration:**
 
-### What It Will Do
-- ✅ Provide educational wellness information
-- ✅ Identify Ayurvedic patterns
-- ✅ Suggest lifestyle modifications
-- ✅ Flag potential risks
-- ✅ Recommend professional consultation
-- ✅ Work without internet
+| Parameter | Value |
+|-----------|-------|
+| Epochs | 3 |
+| Batch size | 4 |
+| Learning rate | 2e-4 |
+| Precision | bfloat16 |
+| Train split | 401 samples |
+| Eval split | 45 samples |
 
----
+**LoRA configuration:**
 
-## 📊 Impact Potential
-
-### Per Clinic Metrics
-- **100 patients/day** handled
-- **20% reduction** in unsafe self-medication
-- **30% improvement** in treatment adherence
-- **2-3 hours** saved per doctor per day
-
-### At Scale (10,000 Clinics)
-- **1 million+ patients** monthly
-- **200,000 safer** patient journeys per month
-- **Reduced healthcare burden** without additional staff
-- **Cost-effective** deployment: $500-1000 per clinic
+| Parameter | Value |
+|-----------|-------|
+| r | 16 |
+| alpha | 32 |
+| Target modules | q_proj, k_proj, v_proj, o_proj |
+| Dropout | 0.05 |
+| Task type | CAUSAL_LM |
 
 ---
 
-## 🛠️ Development
+## 📂 Dataset
 
-### Project Structure
-```
-ayurveda-ai/
-├── app/                      # Frontend and API
-│   ├── main.py              # Streamlit UI
-│   └── api.py               # Backend interface
-├── agents/                  # Specialized agents
-│   ├── symptom_agent.py
-│   ├── dosha_agent.py
-│   ├── guidance_agent.py
-│   └── safety_agent.py
-├── graph/                   # Orchestration
-│   └── langgraph_flow.py
-├── prompts/                 # Agent prompts
-│   ├── symptom.txt
-│   ├── dosha.txt
-│   ├── guidance.txt
-│   └── safety.txt
-├── models/                  # Model management
-│   └── medgemma_loader.py
-├── docs/                    # Documentation
-│   ├── architecture.md      # Technical design
-│   └── safety.md            # Safety protocols
-├── requirements.txt         # Python dependencies
-└── README.md               # This file
-```
+**AyurGenixAI** — 446 Ayurvedic treatment plans covering diseases, herbs,
+formulations, diet, and yoga across 34 clinical dimensions.
 
-### Running Tests
-```bash
-pytest tests/ -v
-```
-
-### Code Quality
-```bash
-# Format code
-black app/ agents/ graph/ models/
-
-# Lint
-flake8 app/ agents/ graph/ models/
-
-# Type checking
-mypy app/ agents/ graph/ models/
-```
+Source: [Kaggle — AyurGenixAI Dataset](https://www.kaggle.com/datasets/kagglekirti123/ayurgenixai-ayurvedic-dataset)
 
 ---
 
-## 📚 Documentation
+## 🌍 Impact
 
-- **[Architecture.md](docs/architecture.md)** — Detailed system design, agent descriptions, data flows
-- **[Safety.md](docs/safety.md)** — Safety protocols, disclaimers, regulatory compliance
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Areas needing help:
-
-- [ ] Enhanced contraindication database
-- [ ] Multi-language support
-- [ ] Mobile app frontend
-- [ ] Additional agent types
-- [ ] EHR integration
-- [ ] Real-world testing and feedback
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+- **1.2 billion** people served by Ayurvedic medicine as primary healthcare
+- **Zero internet dependency** — deployable in rural clinics today
+- **Privacy-first** — all computation local, no data leaves the device
+- **AYUSH Ministry alignment** — supports India's national AI health mandate
+- **Edge deployment** — runs on local hardware, no cloud required
 
 ---
 
-## 📜 License
+## ⚠️ Disclaimer
 
-MIT License — See [LICENSE](LICENSE) for details
-
-**Use it freely. Improve it together. Deploy it everywhere.**
-
----
-
-## ⚠️ Critical Disclaimer
-
-```
-IMPORTANT: MEDICAL DISCLAIMER
-
-This Ayurveda AI system provides EDUCATIONAL WELLNESS INFORMATION only.
-It is NOT a medical device and does NOT:
-
-✗ Diagnose diseases
-✗ Prescribe treatments
-✗ Replace professional medical advice
-✗ Guarantee health outcomes
-
-You MUST:
-✓ Always consult qualified healthcare providers
-✓ Inform your doctor of any new recommendations
-✓ Seek immediate care for emergencies
-✓ Not delay professional treatment
-
-By using this system, you acknowledge these limitations.
-```
-
----
-
-## 🌟 Why Choose Ayurveda AI?
-
-| Feature | Traditional AI | Ayurveda AI |
-|---------|---|---|
-| **Offline** | ❌ | ✅ |
-| **Privacy** | ❌ Cloud-based | ✅ Local-only |
-| **Auditable** | ❌ Black box | ✅ Traceable |
-| **Safe** | ⚠️ General LLM | ✅ Multi-agent safety |
-| **Regulatory** | ❌ Hard to comply | ✅ Built-in compliance |
-| **Cost** | 💰 Expensive cloud | ✅ Affordable local |
-| **Scalable** | ❌ Infrastructure | ✅ Hardware portable |
-| **Reliable** | ❌ Depends on internet | ✅ Works offline |
-
----
-
-## 📞 Support
-
-- **Issues & Bugs:** [GitHub Issues](https://github.com/yourusername/ayurveda-ai/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/ayurveda-ai/discussions)
-- **Email:** support@ayurvedaai.local
-
----
-
-## 🙏 Acknowledgments
-
-Built with:
-- **MedGemma 2B** — Healthcare-optimized open model
-- **LangChain & LangGraph** — Agent orchestration
-- **Streamlit** — Intuitive UI framework
-- **PyTorch** — Deep learning foundation
-
-Inspired by:
-- Traditional Ayurvedic wisdom
-- Modern safety engineering
-- Open-source healthcare initiatives
-- Clinical realities of underserved communities
-
----
-
-## 🚀 Roadmap
-
-### Phase 1: Core System ✅
-- Multi-agent architecture
-- Offline operation
-- Safety verification
-- Streamlit UI
-
-### Phase 2: Enhancement (Q2 2026)
-- Fine-tuning on AYUSH guidelines
-- Expanded contraindication database
-- Provider collaboration features
-- Analytics dashboard
-
-### Phase 3: Integration (Q3 2026)
-- EHR system connectors
-- Mobile app
-- Multi-language support
-- Professional provider network
-
-### Phase 4: Expansion (Q4 2026)
-- Extend to TCM, Unani, etc.
-- Post-discharge management
-- Chronic disease tracking
-- Telehealth integration
-
----
-
-**Built for clinics. Trusted by doctors. Safe for patients. Open for everyone.**
-
-🌿 **Ayurveda meets AI. Privacy meets Intelligence. Care reaches everywhere.**
+This system provides educational Ayurvedic guidance only. It is NOT a medical
+diagnosis or prescription. Always consult a qualified Ayurvedic practitioner
+(BAMS) and licensed physician before starting any treatment. In emergencies,
+contact medical services immediately.
