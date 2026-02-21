@@ -4,17 +4,17 @@
 
 **Submitted to:** MedGemma Impact Challenge (Kaggle, Feb 2026)  
 **Branch:** master  
-**Author:** Priti Sneha Gupta
+**Author:** P S Priti Sudha
 
 ---
 
-## 📌 Problem
+## Problem
 
 Over **1.2 billion people** in South Asia rely on Ayurveda as primary healthcare. Rural practitioners have no AI tools, no reliable internet, and no access to specialist consultations. No AI system exists for Ayurvedic clinical decision support.
 
 ---
 
-## ✅ Solution
+## Solution
 
 Ayurveda AI is a fully offline clinical intelligence system that provides structured Ayurvedic assessments including:
 
@@ -47,7 +47,7 @@ All processing runs **100% locally** with zero internet dependency.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Ayurveda-ai/
@@ -106,7 +106,7 @@ Ayurveda-ai/
 
 ---
 
-## 🔄 Agent Pipeline
+## Agent Pipeline
 
 ```
 Patient Input
@@ -150,7 +150,7 @@ Final Structured Assessment
 
 ---
 
-## ⚙️ Installation
+## Installation
 
 ```bash
 # Clone repository
@@ -168,7 +168,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Run Commands (In Order)
+## Run Commands (In Order)
 
 ```bash
 # Step 1 — Activate environment
@@ -195,7 +195,7 @@ Open browser at `http://localhost:8501`
 
 ---
 
-## 🖥️ Streamlit UI — 3 Tabs
+## Streamlit UI — 3 Tabs
 
 **Tab 1 — Clinical Assessment**  
 Enter patient details → 4-agent pipeline → structured Ayurvedic assessment
@@ -208,7 +208,7 @@ Loss curves, epoch metrics, model configuration, accuracy numbers
 
 ---
 
-## 🔧 Technical Details
+## Technical Details
 
 **Why a custom training loop?**  
 MedGemma 4B uses the Gemma3 architecture which requires explicit `token_type_ids`
@@ -239,7 +239,7 @@ handle this automatically. We wrote a custom PyTorch loop with manual
 
 ---
 
-## 📂 Dataset
+## Dataset
 
 **AyurGenixAI** — 446 Ayurvedic treatment plans covering diseases, herbs,
 formulations, diet, and yoga across 34 clinical dimensions.
@@ -248,7 +248,7 @@ Source: [Kaggle — AyurGenixAI Dataset](https://www.kaggle.com/datasets/kagglek
 
 ---
 
-## 🌍 Impact
+## Impact
 
 - **1.2 billion** people served by Ayurvedic medicine as primary healthcare
 - **Zero internet dependency** — deployable in rural clinics today
@@ -258,7 +258,7 @@ Source: [Kaggle — AyurGenixAI Dataset](https://www.kaggle.com/datasets/kagglek
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This system provides educational Ayurvedic guidance only. It is NOT a medical
 diagnosis or prescription. Always consult a qualified Ayurvedic practitioner
