@@ -4,7 +4,7 @@
 
 **Submitted to:** MedGemma Impact Challenge (Kaggle, Feb 2026)  
 **Branch:** master  
-**Author:** Priti Sudha
+**Author:** Priti Sneha Gupta
 
 ---
 
@@ -72,19 +72,24 @@ Ayurveda-ai/
 │   ├── kaggle_ayurveda/
 │   │   └── AyurGenixAI_Dataset.csv
 │   └── tongue_samples/
-│       ├── vata_tongue.jpg
-│       ├── pitta_tongue.jpg
+│       ├── coated_tongue.jpg
+│       ├── geographic_tongue.jpg
+│       ├── healthy_tongue.jpg
 │       ├── kapha_tongue.jpg
-│       └── healthy_tongue.jpg
+│       ├── pitta_tongue.jpg
+│       └── vata_tongue.jpg
 │
 ├── graph/
-│   └── pipeline.py                # LangGraph agent orchestration
+│   └── pipeline.py                # LangGraph agent orchestration (CRITICAL)
 │
 ├── models/
 │   └── medgemma-ayurveda-lora/
 │       └── final/
 │           ├── adapter_config.json
-│           └── adapter_model.safetensors
+│           ├── adapter_model.safetensors
+│           ├── chat_template.jinja
+│           ├── tokenizer_config.json
+│           └── tokenizer.json
 │
 ├── scripts/
 │   ├── finetune_medgemma.py       # Fine-tuning (custom training loop)
