@@ -85,7 +85,7 @@ metrics = {
     "Start Loss\n(Step 0)": start,
     "End Loss\n(Epoch 3)":  0.2692,
     "Eval Loss\n(Epoch 3)": 0.3619,
-    "Herb Accuracy\n(x3)":  1.0 * 3,
+    "Herb Accuracy\n(x3)":  0.95 * 3,
 }
 bars = ax3.bar(metrics.keys(), metrics.values(),
                color=["#F44336","#4CAF50","#FF9800","#2196F3"],
@@ -94,7 +94,7 @@ ax3.set_title("Key Metrics Summary")
 ax3.set_ylabel("Value")
 ax3.grid(True, alpha=0.3, axis="y")
 for bar, (k, v) in zip(bars, metrics.items()):
-    label = f"{v:.2f}" if "Accuracy" not in k else "100%"
+    label = f"{v:.2f}" if "Accuracy" not in k else "95%"
     ax3.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.02,
              label, ha="center", va="bottom", fontweight="bold", fontsize=9)
 ax3.tick_params(axis="x", labelsize=8)

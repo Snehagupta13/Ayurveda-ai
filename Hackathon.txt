@@ -405,3 +405,116 @@ Ayurveda-ai/
 ├── inference.py
 ├── README.md
 └── requirements.txt
+
+JOURNEY BEFORE FastAPI (Streamlit only)
+Patient Input (form)
+        ↓
+Streamlit UI (app/main.py)
+        ↓
+inference.py
+        ↓
+5-Agent Pipeline (graph/pipeline.py)
+        ↓
+MedGemma 4B + LoRA
+        ↓
+Result shown in same Streamlit page
+
+But Streamlit looks like a developer tool. Not impressive visually. No API.
+
+JOURNEY AFTER FastAPI (Current state)
+Browser (frontend/index.html)
+        ↓
+JavaScript fetch() call
+        ↓
+FastAPI (api/main.py) — port 8001
+  ├── POST /api/assess   → text pipeline
+  ├── POST /api/tongue   → vision pipeline
+  └── GET  /docs         → auto API documentation
+        ↓
+inference.py (same as before)
+        ↓
+graph/pipeline.py
+  ├── Agent 1: VisionAgent    (tongue image → dosha)
+  ├── Agent 2: SymptomAgent   (symptoms → dosha score)
+  ├── Agent 3: DoshaAgent     (dosha → treatment principles)
+  ├── Agent 4: GuidanceAgent  (MedGemma 4B + LoRA → full assessment)
+  └── Agent 5: SafetyAgent    (validate + disclaimer)
+        ↓
+JSON response back to browser
+        ↓
+Beautiful result displayed on website
+
+Same AI brain, completely new professional face. Now looks like a real product.
+HTML alone:
+Button clicked → nothing happens → dead end
+
+HTML + FastAPI:
+Button clicked → FastAPI receives request → 
+runs your Python AI → sends result back → 
+displayed on page 
+
+FRONTEND          BACKEND           AI PIPELINE
+                  
+Beautiful    ←→   FastAPI      ←→   MedGemma 4B
+Website           (api/main.py)     + 5 Agents
+(index.html)                        + LoRA
+                  
+What user         The bridge        The brain
+sees & clicks     that connects     that generates
+                  both sides        the assessment
+
+Command:
+CUDA_VISIBLE_DEVICES=2 uvicorn api.main:app --host 0.0.0.0 --port 8002
+
+Two separate servers:
+
+FastAPI on port 8002 — handles API requests
+Frontend on port 8082 — serves the website
+
+# Terminal 2 — Open website
+# Just open browser at:
+http://localhost:8002
+```
+
+---
+
+## What Was Built
+
+**`api/main.py`** — FastAPI backend with 3 endpoints:
+- `POST /api/assess` — text pipeline
+- `POST /api/tongue` — multimodal vision pipeline
+- `GET /api/health` — health check
+- `GET /docs` — auto-generated API docs (FastAPI's killer feature)
+
+**`frontend/index.html`** — Full website with:
+- Dark botanical hero section with live stats (2.89→0.27, 95%, 5 agents, 446)
+- 4 tabs: Clinical Assessment, Tongue Analysis, Training Results, Agent Pipeline
+- Beautiful form with quick-fill example chips
+- Animated spinner during inference
+- Full agent pipeline visualization
+- Training charts embedded
+- Responsive mobile layout
+
+---
+
+## Updated Project Structure
+```
+Ayurveda-ai/
+├── api/
+│   ├── __init__.py
+│   └── main.py          ← FastAPI backend
+├── frontend/
+│   ├── index.html       ← Main website
+│   └── static/
+│       └── training_curves.png
+├── app/                 ← Streamlit (keep as backup)
+...
+
+Record the 3-minute video. Show in this order:
+
+Open website — show hero section (10 sec)
+Clinical Assessment tab — type Diabetes, click button, show result (60 sec)
+Tongue Analysis tab — upload a tongue image, show result (45 sec)
+Training Results tab — show loss curve chart (20 sec)
+Agent Pipeline tab — show the flow (15 sec)
+Open /docs — show FastAPI auto-documentation (10 sec)
