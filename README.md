@@ -19,13 +19,12 @@ Over **1.2 billion people** in South Asia rely on Ayurveda as primary healthcare
 Ayurveda AI is a fully offline clinical intelligence system that provides structured Ayurvedic assessments including:
 
 - Dosha analysis (Vata / Pitta / Kapha)
-- Herb recommendations
-- Formulations and dosages
+- Herb recommendations with specific formulations and dosages
 - Dietary and lifestyle guidance
-- Yoga and physical therapy
-- Prognosis and prevention
+- Yoga and physical therapy recommendations
+- Prognosis and prevention guidance
 
-All processing runs **100% locally** with zero internet dependency.
+All processing runs **100% locally** with zero internet dependency. No patient data leaves the device.
 
 ---
 
@@ -47,6 +46,27 @@ All processing runs **100% locally** with zero internet dependency.
 
 ---
 
+## 🖥️ Web Application (FastAPI)
+
+The project includes a professional web application built on **FastAPI + HTML/CSS/JS**, serving as a production-ready clinical interface.
+
+**Run the web app:**
+```bash
+CUDA_VISIBLE_DEVICES=<GPU_ID> uvicorn api.main:app --host 0.0.0.0 --port 8002
+```
+
+Open browser at `http://localhost:8002`
+
+**4 Tabs:**
+- **Clinical Assessment** — Enter patient details → 5-agent pipeline → full structured Ayurvedic report
+- **Tongue Analysis (Darshan)** — Upload tongue photo + symptoms → multimodal 5-agent pipeline → visual dosha diagnosis
+- **Training Results** — Loss curves, epoch metrics, model configuration, accuracy numbers
+- **Agent Pipeline** — Visual diagram of the 5-agent LangGraph architecture
+
+**API Documentation:** Available at `http://localhost:8002/docs` (auto-generated Swagger UI)
+
+---
+
 ## Project Structure
 
 ```
@@ -60,8 +80,11 @@ Ayurveda-ai/
 │   ├── safety_agent.py            # Validates output, appends disclaimer
 │   └── vision_agent.py            # Tongue analysis via MedGemma vision
 │
+├── api/
+│   └── main.py                    # FastAPI backend (production web interface)
+│
 ├── app/
-│   └── main.py                    # Streamlit UI (3 tabs)
+│   └── main.py                    # Streamlit UI (backup/development interface)
 │
 ├── assets/
 │   ├── training_curves.png        # 3-panel training chart
@@ -78,6 +101,11 @@ Ayurveda-ai/
 │       ├── kapha_tongue.jpg
 │       ├── pitta_tongue.jpg
 │       └── vata_tongue.jpg
+│
+├── frontend/
+│   ├── index.html                 # Professional web UI (HTML/CSS/JS)
+│   └── static/
+│       └── training_curves.png    # Chart served to frontend
 │
 ├── graph/
 │   └── pipeline.py                # LangGraph agent orchestration (CRITICAL)
@@ -143,10 +171,26 @@ Appends medical disclaimer
         │
         ▼
 Final Structured Assessment
+(Dosha Analysis | Herbs | Formulation |
+ Diet | Yoga | Prevention | Prognosis)
 ```
 
 **Text mode:** 4 agents (no image)  
 **Multimodal mode:** 5 agents (with tongue image)
+
+---
+
+## Sample Output
+
+**Input:** Diabetes, frequent urination, fatigue, increased thirst — Middle-aged Male, Metformin, High stress, High sugar diet
+
+**Output:**
+- **Dosha:** Vata-Kapha imbalance (Vata primary)
+- **Herbs:** Bitter Melon, Gymnema Sylvestre
+- **Formulation:** Fenugreek 3g daily
+- **Diet:** Avoid sugary foods; include fiber-rich foods
+- **Yoga:** Yoga for Blood Sugar Control
+- **Prognosis:** Can be managed with consistent treatment
 
 ---
 
@@ -187,34 +231,24 @@ python inference.py
 # Step 5 — Run evaluation
 python scripts/evaluate.py
 
-# Step 6 — Launch Streamlit UI
+# Step 6A — Launch FastAPI web app (recommended)
+CUDA_VISIBLE_DEVICES=<GPU_ID> uvicorn api.main:app --host 0.0.0.0 --port 8002
+
+# Step 6B — Launch Streamlit UI (alternative)
 streamlit run app/main.py --server.port 8501 --server.address 0.0.0.0
 ```
 
-Open browser at `http://localhost:8501`
-
----
-
-## Streamlit UI — 3 Tabs
-
-**Tab 1 — Clinical Assessment**  
-Enter patient details → 4-agent pipeline → structured Ayurvedic assessment
-
-**Tab 2 — Tongue Analysis (Darshan)**  
-Upload tongue photo → 5-agent multimodal pipeline → visual dosha diagnosis
-
-**Tab 3 — Training Results**  
-Loss curves, epoch metrics, model configuration, accuracy numbers
+> **Note:** Replace `<GPU_ID>` with a free GPU index (check with `nvidia-smi`). The model requires ~9GB VRAM.
 
 ---
 
 ## Technical Details
 
 **Why a custom training loop?**  
-MedGemma 4B uses the Gemma3 architecture which requires explicit `token_type_ids`
-during training. Standard frameworks (HuggingFace Trainer, SFTTrainer) do not
-handle this automatically. We wrote a custom PyTorch loop with manual
-`token_type_ids` injection as zeros.
+MedGemma 4B uses the Gemma3 architecture which requires explicit `token_type_ids` during training. Standard frameworks (HuggingFace Trainer, SFTTrainer) do not handle this automatically. We wrote a custom PyTorch loop with manual `token_type_ids` injection as zeros.
+
+**Why FastAPI over Streamlit?**  
+FastAPI separates the frontend from the AI backend, enabling a production-grade web interface with a standard REST API. The same AI pipeline is accessible via any HTTP client. Auto-generated Swagger docs at `/docs` enable easy integration with mobile apps or EHR systems.
 
 **Training configuration:**
 
@@ -241,10 +275,21 @@ handle this automatically. We wrote a custom PyTorch loop with manual
 
 ## Dataset
 
-**AyurGenixAI** — 446 Ayurvedic treatment plans covering diseases, herbs,
-formulations, diet, and yoga across 34 clinical dimensions.
+**AyurGenixAI** — 446 Ayurvedic treatment plans covering diseases, herbs, formulations, diet, and yoga across 34 clinical dimensions.
 
 Source: [Kaggle — AyurGenixAI Dataset](https://www.kaggle.com/datasets/kagglekirti123/ayurgenixai-ayurvedic-dataset)
+
+---
+
+## REST API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Web application UI |
+| `/api/health` | GET | Server status check |
+| `/api/assess` | POST | Clinical assessment (text mode) |
+| `/api/tongue` | POST | Tongue analysis (multimodal mode) |
+| `/docs` | GET | Auto-generated Swagger UI |
 
 ---
 
@@ -255,12 +300,10 @@ Source: [Kaggle — AyurGenixAI Dataset](https://www.kaggle.com/datasets/kagglek
 - **Privacy-first** — all computation local, no data leaves the device
 - **AYUSH Ministry alignment** — supports India's national AI health mandate
 - **Edge deployment** — runs on local hardware, no cloud required
+- **REST API** — integrates with mobile apps, EHR systems, clinic management software
 
 ---
 
 ## Disclaimer
 
-This system provides educational Ayurvedic guidance only. It is NOT a medical
-diagnosis or prescription. Always consult a qualified Ayurvedic practitioner
-(BAMS) and licensed physician before starting any treatment. In emergencies,
-contact medical services immediately.
+This system provides educational Ayurvedic guidance only. It is NOT a medical diagnosis or prescription. Always consult a qualified Ayurvedic practitioner (BAMS) and licensed physician before starting any treatment. In emergencies, contact medical services immediately.
