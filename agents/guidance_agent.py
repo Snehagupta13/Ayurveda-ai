@@ -15,7 +15,7 @@ def _load_model():
         _tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, token=True)
         _tokenizer.pad_token = _tokenizer.eos_token
         base = AutoModelForCausalLM.from_pretrained(
-            BASE_MODEL, token=True, dtype=torch.bfloat16, device_map="auto"
+            BASE_MODEL, token=True, dtype=torch.float16, device_map="auto"
         )
         _model = PeftModel.from_pretrained(base, LORA_PATH)
         _model.eval()
